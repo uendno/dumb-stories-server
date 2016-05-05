@@ -15,6 +15,7 @@ var pieceSchema = new Schema({
     _id: ObjectIdSchema,
     creator_id: ObjectIdSchema,
     content: String,
+    next_start: String,
     created_at: Date,
     updated_at: Date
 });

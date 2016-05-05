@@ -105,6 +105,16 @@ router.get('/', function (req, res) {
 
 //route for getting a particular stories by it's id
 router.get('/:id', function (req, res) {
+    
+    //check id format
+    if (!ObjectId.isValid(req.params.id)) {
+         console.log("Invalid id");
+            return res.status(400).send({
+                success: false,
+                message: "Wrong id format"
+            });
+    }
+    
     Story.findById(new ObjectId(req.params.id), function (err, story) {
         console.log(new ObjectId(req.params.id));
         if (err) {
@@ -146,11 +156,15 @@ router.get('/:id', function (req, res) {
                             for (var position = 0; position < story.pieces.length; position++) {
 
                                 var piece = story.pieces[position];
+                                var start = "";
+                                if (position > 0) {
+                                    start = story.pieces[position - 1].next_start;
+                                }
 
                                 //Find the creator of the piece
                                 //We prevent the story variable from the side effect of asynchronous loop
                                 // by passing it in to this immediately invoked function expression
-                                (function (piece) {
+                                (function (piece, start) {
                                     User.findById(piece.creator_id, function (err, pieceCreator) {
                                         if (err) {
                                             console.log(err);
@@ -166,14 +180,20 @@ router.get('/:id', function (req, res) {
                                                     message: "Can't find the creator of the piece"
                                                 })
                                             } else {
+
                                                 //data for adding to the resultPiece
+                                                var content = piece.content;
+
+                                                //check if it's a 1st piece or not, if not, it's send back the content containing the it's start defined by the previous piece
                                                 var resultPiece = {
                                                     _id: piece._id,
                                                     creator: {
                                                         _id: pieceCreator._id,
                                                         name: pieceCreator.user_name
                                                     },
-                                                    content: piece.content,
+                                                    start: start,
+                                                    content: content,
+                                                    next_start: piece.next_start,
                                                     created_at: piece.created_at,
                                                     updated_at: piece.updated_at
                                                 };
@@ -201,7 +221,7 @@ router.get('/:id', function (req, res) {
                                             }
                                         }
                                     });
-                                })(piece);
+                                })(piece, start);
                             }
                         }
                     }
@@ -218,7 +238,7 @@ router.post('/', function (req, res) {
     var body = req.body;
 
     //Check null data
-    if(body.title == null || body.content == null){
+    if (body.title == null || body.content == null || body.next_start == null) {
         console.log("Null data");
         return res.status(400).send({
             success: false,
@@ -233,6 +253,9 @@ router.post('/', function (req, res) {
                 _id: new ObjectId,
                 creator_id: creatorID,
                 content: body.content,
+                next_start: body.next_start,
+                created_at: new Date,
+                updated_at: new Date,
             }
         ]
     });
@@ -258,22 +281,32 @@ router.post('/', function (req, res) {
 
 //route for posting a piece into a particular story specified by it's id
 router.post('/:id', function (req, res) {
+    
+    //check id format
+     if (!ObjectId.isValid(req.params.id)) {
+         console.log("Invalid id");
+            return res.status(400).send({
+                success: false,
+                message: "Wrong id format"
+            });
+    }
 
     //Check null data
-    if(req.body.content == null){
+    if (req.body.next_start == null || req.body.content == null) {
         console.log("Null data");
         return res.status(400).send({
             success: false,
             message: "Null data"
         });
     }
-    Story.findOneAndUpdate({_id: new ObjectId(req.params.id)},
+    Story.findOneAndUpdate({ _id: new ObjectId(req.params.id) },
         {
             $push: {
                 "pieces": {
-                    _id : new ObjectId,
+                    _id: new ObjectId,
                     creator_id: req.decoded._doc._id,
                     content: req.body.content,
+                    next_start: req.body.next_start,
                     created_at: new Date,
                     updated_at: new Date
                 }

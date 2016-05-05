@@ -1,2 +1,6 @@
 # ignore libs
 node_modules/
+
+# ignore vscode files
+.vscode/
+
