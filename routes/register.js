@@ -29,7 +29,7 @@ router.post('/', function (req, res) {
             console.log(err);
             return res.status(500).send({
                 success: false,
-                message: err
+                message: err.message
             });
 
         } else {
@@ -50,7 +50,7 @@ router.post('/', function (req, res) {
                         console.log(err);
                         return res.status(500).send({
                             success: false,
-                            message: err
+                            message: err.message
                         });
                     } else {
                         console.log("created user successfully");
@@ -62,7 +62,7 @@ router.post('/', function (req, res) {
                                 console.log(err);
                                 return res.status(500).send({
                                     success: false,
-                                    message: err
+                                    message: err.message
                                 });
                             } else {
                                 if (!user) {

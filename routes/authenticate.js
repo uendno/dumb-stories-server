@@ -28,7 +28,7 @@ router.post('/', function (req, res) {
             console.log(err);
             res.status(500).send({
                 success: false,
-                message: err
+                message: err.message
             });
         } else {
             if (!user) {

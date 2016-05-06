@@ -18,7 +18,7 @@ router.get('/', function (req, res) {
             console.log(err);
             return res.status(500).send({
                 success: false,
-                message: err
+                message: err.message
             });
         } else {
 
@@ -46,7 +46,7 @@ router.get('/', function (req, res) {
                                 console.log(err);
                                 return res.status(500).send({
                                     success: false,
-                                    message: "Process can't be done because of an error while finding the creator"
+                                    message: err.message
                                 });
                             } else {
                                 if (creator == null) {
@@ -121,7 +121,7 @@ router.get('/:id', function (req, res) {
             console.log(err);
             return res.status(500).send({
                 success: false,
-                message: err
+                message: err.message
             });
         } else {
             //if result is null
@@ -139,7 +139,7 @@ router.get('/:id', function (req, res) {
                         console.log(err);
                         return res.status(500).send({
                             success: false,
-                            message: "Process can't be done because of an error while finding the creator of story"
+                            message: err.message
                         });
                     } else {
                         if (storyCreator == null) {
@@ -170,7 +170,7 @@ router.get('/:id', function (req, res) {
                                             console.log(err);
                                             return res.status(500).send({
                                                 success: false,
-                                                message: "Process can't be done because of an error while finding the creator of a piece"
+                                                message: erer.message
                                             });
                                         } else {
                                             if (pieceCreator == null) {
@@ -266,7 +266,7 @@ router.post('/', function (req, res) {
             console.log(err);
             return res.status(500).send({
                 success: false,
-                message: err
+                message: err.message
             });
         } else {
             console.log("created story successfully");
@@ -317,7 +317,7 @@ router.post('/:id', function (req, res) {
                 console.log(err);
                 return res.status(500).send({
                     success: false,
-                    message: err
+                    message: err.message
                 });
             } else {
                 return res.send({
