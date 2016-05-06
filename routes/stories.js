@@ -26,7 +26,7 @@ router.get('/', function (req, res) {
             if (stories == null || stories.length == 0) {
                 console.log("null stories");
 
-                return res.status(404).send({
+                return res.status(410).send({
                     success: false,
                     message: "no stories"
                 });
@@ -128,7 +128,7 @@ router.get('/:id', function (req, res) {
             if (story == null) {
                 console.log("null result");
 
-                return res.status(404).send({
+                return res.status(410).send({
                     success: false,
                     message: "Can't find the story"
                 })
