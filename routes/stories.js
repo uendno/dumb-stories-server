@@ -59,14 +59,14 @@ router.get('/', function (req, res) {
                                 } else {
 
                                     //get a review for this story
-                                    var review = story.pieces[0].content;
+                                    var preview = story.pieces[0].content;
                                     var reviewLength = config.text.REVIEW_LENGTH;
-                                    if (reviewLength < review.length) {
-                                        while (reviewLength >= 0 && review.charAt(reviewLength) != ' ') {
+                                    if (reviewLength < preview.length) {
+                                        while (reviewLength >= 0 && preview.charAt(reviewLength) != ' ') {
                                             reviewLength--;
                                         }
 
-                                        review = review.substr(0, reviewLength) + "..."
+                                        preview = preview.substr(0, reviewLength) + "..."
 
                                     }
 
@@ -78,7 +78,7 @@ router.get('/', function (req, res) {
                                             _id: creator._id,
                                             name: creator.user_name
                                         },
-                                        review: review,
+                                        preview: preview,
                                         created_at: story.created_at,
                                         updated_at: story.updated_at
                                     };
