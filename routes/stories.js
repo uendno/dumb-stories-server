@@ -16,7 +16,7 @@ router.get('/', function (req, res) {
     Story.find({}, function (err, stories) {
         if (err) {
             console.log(err);
-            return res.status(500).send({
+            return res.send({
                 success: false,
                 message: err.message
             });
@@ -26,9 +26,9 @@ router.get('/', function (req, res) {
             if (stories == null || stories.length == 0) {
                 console.log("null stories");
 
-                return res.status(410).send({
+                return res.send({
                     success: false,
-                    message: "no stories"
+                    message: "No stories"
                 });
             } else {
                 var data = [];
@@ -44,7 +44,7 @@ router.get('/', function (req, res) {
 
                             if (err) {
                                 console.log(err);
-                                return res.status(500).send({
+                                return res.send({
                                     success: false,
                                     message: err.message
                                 });
@@ -52,7 +52,7 @@ router.get('/', function (req, res) {
                                 if (creator == null) {
                                     console.log("null story creator");
 
-                                    return res.status(500).send({
+                                    return res.send({
                                         success: false,
                                         message: "Can't find the creator of the story"
                                     })
@@ -109,7 +109,7 @@ router.get('/:id', function (req, res) {
     //check id format
     if (!ObjectId.isValid(req.params.id)) {
          console.log("Invalid id");
-            return res.status(400).send({
+            return res.send({
                 success: false,
                 message: "Wrong id format"
             });
@@ -119,7 +119,7 @@ router.get('/:id', function (req, res) {
         console.log(new ObjectId(req.params.id));
         if (err) {
             console.log(err);
-            return res.status(500).send({
+            return res.send({
                 success: false,
                 message: err.message
             });
@@ -128,7 +128,7 @@ router.get('/:id', function (req, res) {
             if (story == null) {
                 console.log("null result");
 
-                return res.status(410).send({
+                return res.send({
                     success: false,
                     message: "Can't find the story"
                 })
@@ -137,7 +137,7 @@ router.get('/:id', function (req, res) {
                 User.findById(story.creator_id, function (err, storyCreator) {
                     if (err) {
                         console.log(err);
-                        return res.status(500).send({
+                        return res.send({
                             success: false,
                             message: err.message
                         });
@@ -145,7 +145,7 @@ router.get('/:id', function (req, res) {
                         if (storyCreator == null) {
                             console.log("null story creator");
 
-                            return res.status(500).send({
+                            return res.send({
                                 success: false,
                                 message: "Can't find the creator of the story"
                             })
@@ -168,14 +168,14 @@ router.get('/:id', function (req, res) {
                                     User.findById(piece.creator_id, function (err, pieceCreator) {
                                         if (err) {
                                             console.log(err);
-                                            return res.status(500).send({
+                                            return res.send({
                                                 success: false,
                                                 message: erer.message
                                             });
                                         } else {
                                             if (pieceCreator == null) {
                                                 console.log("null piece creator");
-                                                return res.status(500).send({
+                                                return res.send({
                                                     success: false,
                                                     message: "Can't find the creator of the piece"
                                                 })
@@ -240,7 +240,7 @@ router.post('/', function (req, res) {
     //Check null data
     if (body.title == null || body.content == null || body.next_start == null) {
         console.log("Null data");
-        return res.status(400).send({
+        return res.send({
             success: false,
             message: "Null data"
         });
@@ -264,13 +264,13 @@ router.post('/', function (req, res) {
 
         if (err) {
             console.log(err);
-            return res.status(500).send({
+            return res.send({
                 success: false,
                 message: err.message
             });
         } else {
             console.log("created story successfully");
-            return res.status(200).send({
+            return res.send({
                 success: true,
                 message: "Create story successfully"
             });
@@ -285,7 +285,7 @@ router.post('/:id', function (req, res) {
     //check id format
      if (!ObjectId.isValid(req.params.id)) {
          console.log("Invalid id");
-            return res.status(400).send({
+            return res.send({
                 success: false,
                 message: "Wrong id format"
             });
@@ -294,7 +294,7 @@ router.post('/:id', function (req, res) {
     //Check null data
     if (req.body.next_start == null || req.body.content == null) {
         console.log("Null data");
-        return res.status(400).send({
+        return res.send({
             success: false,
             message: "Null data"
         });
@@ -315,7 +315,7 @@ router.post('/:id', function (req, res) {
             console.log(new ObjectId(req.params.id));
             if (err) {
                 console.log(err);
-                return res.status(500).send({
+                return res.send({
                     success: false,
                     message: err.message
                 });

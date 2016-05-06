@@ -14,9 +14,9 @@ router.post('/', function (req, res) {
     //check null user_name or password
     if (req.body.user_name == null || req.body.password == null) {
         console.log("Null user_name or password");
-        return res.status(400).send({
+        return res.send({
             success: false,
-            message: "Null user_name or password"
+            message: "Null username or password"
         });
     }
     
@@ -26,14 +26,14 @@ router.post('/', function (req, res) {
 
         if (err) {
             console.log(err);
-            res.status(500).send({
+            res.send({
                 success: false,
                 message: err.message
             });
         } else {
             if (!user) {
                 console.log("null user");
-                res.status(401).send({
+                res.send({
                     success: false,
                     message: "Authentication failed. User not found."
                 });
@@ -42,7 +42,7 @@ router.post('/', function (req, res) {
                 //check if password matches
                 if (user.password != req.body.password) {
                     console.log("wrong password");
-                    res.status(401).send({
+                    res.send({
                         success: false,
                         message: "Authentication failed. Wrong password."
                     });
@@ -54,7 +54,7 @@ router.post('/', function (req, res) {
                     });
 
                     // return the information including token as JSON
-                    res.status(200).send({
+                    res.send({
                         success: true,
                         message: "Enjoy your token!",
                         token: token,

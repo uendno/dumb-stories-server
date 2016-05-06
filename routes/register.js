@@ -13,9 +13,9 @@ router.post('/', function (req, res) {
     //check null user_name or password
     if (req.body.user_name == null || req.body.password == null) {
         console.log("Null user_name or password");
-        return res.status(400).send({
+        return res.send({
             success: false,
-            message: "Null user_name or password"
+            message: "Null username or password"
         });
     }
     
@@ -27,7 +27,7 @@ router.post('/', function (req, res) {
     }, function (err, user) {
         if (err) {
             console.log(err);
-            return res.status(500).send({
+            return res.send({
                 success: false,
                 message: err.message
             });
@@ -35,7 +35,7 @@ router.post('/', function (req, res) {
         } else {
             if (user) {
                 console.log("user_name exits");
-                return res.status(409).send({
+                return res.send({
                     success: false,
                     message: "User name exits"
                 });
@@ -48,7 +48,7 @@ router.post('/', function (req, res) {
                 newUser.save(function (err) {
                     if (err) {
                         console.log(err);
-                        return res.status(500).send({
+                        return res.send({
                             success: false,
                             message: err.message
                         });
@@ -60,14 +60,14 @@ router.post('/', function (req, res) {
                         }, function (err, user) {
                             if (err) {
                                 console.log(err);
-                                return res.status(500).send({
+                                return res.send({
                                     success: false,
                                     message: err.message
                                 });
                             } else {
                                 if (!user) {
                                     console.log("Error while getting back saved user");
-                                    return res.status(500).send({
+                                    return res.send({
                                         success: false,
                                         message: "Error while getting back saved user."
                                     });
@@ -77,7 +77,7 @@ router.post('/', function (req, res) {
                                         expiresIn: config.auth.EXP_TIME
                                     });
 
-                                    return res.status(200).send({
+                                    return res.send({
                                         success: true,
                                         message: "Create user successfully",
                                         token: token,
