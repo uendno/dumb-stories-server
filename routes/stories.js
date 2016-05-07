@@ -260,7 +260,7 @@ router.post('/', function (req, res) {
         ]
     });
 
-    story.save(function (err) {
+    story.save(function (err, story) {
 
         if (err) {
             console.log(err);
@@ -272,7 +272,8 @@ router.post('/', function (req, res) {
             console.log("created story successfully");
             return res.send({
                 success: true,
-                message: "Create story successfully"
+                message: "Create story successfully",
+                story: story
             });
 
         }
@@ -299,7 +300,9 @@ router.post('/:id', function (req, res) {
             message: "Null data"
         });
     }
-    Story.findOneAndUpdate({ _id: new ObjectId(req.params.id) },
+    Story.findOneAndUpdate(
+        { 
+            _id: new ObjectId(req.params.id) },
         {
             $push: {
                 "pieces": {
@@ -311,7 +314,8 @@ router.post('/:id', function (req, res) {
                     updated_at: new Date
                 }
             }
-        }, function (err) {
+        }, 
+        function (err) {
             console.log(new ObjectId(req.params.id));
             if (err) {
                 console.log(err);
@@ -325,7 +329,6 @@ router.post('/:id', function (req, res) {
                     message: "Add piece successfully"
                 })
             }
-
         })
 });
 

@@ -43,6 +43,10 @@ storySchema.pre('save', function (next) {
 });
 
 
+storySchema.statics.findAndModify = function (query, sort, doc, options, callback) {
+    return this.collection.findAndModify(query, sort, doc, options, callback);
+};
+
 
 var Story = mongoose.model('Story', storySchema);
 

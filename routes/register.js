@@ -18,10 +18,10 @@ router.post('/', function (req, res) {
             message: "Null username or password"
         });
     }
-    
+
     var userName = req.body.user_name;
     var password = req.body.password;
-    
+
     User.findOne({
         user_name: userName
     }, function (err, user) {
@@ -45,7 +45,7 @@ router.post('/', function (req, res) {
                     password: password
                 });
 
-                newUser.save(function (err) {
+                newUser.save(function (err, user) {
                     if (err) {
                         console.log(err);
                         return res.send({
@@ -54,40 +54,18 @@ router.post('/', function (req, res) {
                         });
                     } else {
                         console.log("created user successfully");
-
-                        var result = User.findOne({
-                            user_name: userName
-                        }, function (err, user) {
-                            if (err) {
-                                console.log(err);
-                                return res.send({
-                                    success: false,
-                                    message: err.message
-                                });
-                            } else {
-                                if (!user) {
-                                    console.log("Error while getting back saved user");
-                                    return res.send({
-                                        success: false,
-                                        message: "Error while getting back saved user."
-                                    });
-                                } else {
-                                    // create a token
-                                    var token = jwt.sign(newUser, config.auth.SECRET, {
-                                        expiresIn: config.auth.EXP_TIME
-                                    });
-
-                                    return res.send({
-                                        success: true,
-                                        message: "Create user successfully",
-                                        token: token,
-                                        user: user
-                                    })
-                                }
-                            }
+                        // create a token
+                        var token = jwt.sign(newUser, config.auth.SECRET, {
+                            expiresIn: config.auth.EXP_TIME
                         });
 
-
+                        return res.send({
+                            success: true,
+                            message: "Create user successfully",
+                            token: token,
+                            user: user
+                        })
+                        
                     }
                 })
 
