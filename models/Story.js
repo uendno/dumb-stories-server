@@ -23,6 +23,7 @@ var pieceSchema = new Schema({
 var storySchema = new Schema({
     title: String,
     creator_id: ObjectIdSchema,
+    image: ObjectIdSchema,
     pieces: [pieceSchema],
     created_at: Date,
     updated_at: Date

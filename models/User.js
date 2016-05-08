@@ -5,10 +5,12 @@
 var mongoose = require('mongoose');
 
 var Schema = mongoose.Schema;
+var ObjectIdSchema = Schema.ObjectId;
 
 var userSchema = new Schema({
     user_name: {type: String, index: true},
     password: String,
+    avatar: ObjectIdSchema,
     created_at: Date,
     updated_at: Date
 });

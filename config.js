@@ -11,5 +11,10 @@ config.auth = {
     EXP_TIME: 86400
 }
 
+config.server = {
+    IP_ADDRESS: "127.0.0.1",
+    PORT: 3000
+}
+
 module.exports = config;
 

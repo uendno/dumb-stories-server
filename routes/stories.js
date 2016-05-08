@@ -6,9 +6,17 @@ var express = require('express');
 var Story = require('../models/Story');
 var User = require('../models/User');
 var config = require('../config');
-var ObjectId = require('mongoose').Types.ObjectId;
+var mongoose = require('mongoose');
+var Grid = require('gridfs-stream');
+var multer = require("multer");
+var fs = require("fs");
 
 var router = express.Router();
+var ObjectId = mongoose.Types.ObjectId;
+var upload = multer({ dest: 'temp/' });
+var conn = mongoose.connection;
+
+Grid.mongo = mongoose.mongo;
 
 //route for getting all the stories
 router.get('/', function (req, res) {
@@ -74,6 +82,7 @@ router.get('/', function (req, res) {
                                     var resStory = {
                                         _id: story._id,
                                         title: story.title,
+                                        image: config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image,
                                         creator: {
                                             _id: creator._id,
                                             name: creator.user_name
@@ -105,16 +114,16 @@ router.get('/', function (req, res) {
 
 //route for getting a particular stories by it's id
 router.get('/:id', function (req, res) {
-    
+
     //check id format
     if (!ObjectId.isValid(req.params.id)) {
-         console.log("Invalid id");
-            return res.send({
-                success: false,
-                message: "Wrong id format"
-            });
+        console.log("Invalid id");
+        return res.send({
+            success: false,
+            message: "Wrong id format"
+        });
     }
-    
+
     Story.findById(new ObjectId(req.params.id), function (err, story) {
         console.log(new ObjectId(req.params.id));
         if (err) {
@@ -209,6 +218,7 @@ router.get('/:id', function (req, res) {
                                                     data: {
                                                         _id: story._id,
                                                         title: story.title,
+                                                        image: config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image,
                                                         creator: {
                                                             _id: storyCreator._id,
                                                             name: storyCreator.user_name
@@ -282,14 +292,14 @@ router.post('/', function (req, res) {
 
 //route for posting a piece into a particular story specified by it's id
 router.post('/:id', function (req, res) {
-    
+
     //check id format
-     if (!ObjectId.isValid(req.params.id)) {
-         console.log("Invalid id");
-            return res.send({
-                success: false,
-                message: "Wrong id format"
-            });
+    if (!ObjectId.isValid(req.params.id)) {
+        console.log("Invalid id");
+        return res.send({
+            success: false,
+            message: "Wrong id format"
+        });
     }
 
     //Check null data
@@ -301,8 +311,9 @@ router.post('/:id', function (req, res) {
         });
     }
     Story.findOneAndUpdate(
-        { 
-            _id: new ObjectId(req.params.id) },
+        {
+            _id: new ObjectId(req.params.id)
+        },
         {
             $push: {
                 "pieces": {
@@ -314,9 +325,8 @@ router.post('/:id', function (req, res) {
                     updated_at: new Date
                 }
             }
-        }, 
+        },
         function (err) {
-            console.log(new ObjectId(req.params.id));
             if (err) {
                 console.log(err);
                 return res.send({
@@ -331,5 +341,98 @@ router.post('/:id', function (req, res) {
             }
         })
 });
+
+router.post('/:id/uploadimage', upload.single('image'), function (req, res) {
+    var gfs = Grid(conn.db);
+    //check id format
+    if (!ObjectId.isValid(req.params.id)) {
+        console.log("Invalid id");
+        return res.send({
+            success: false,
+            message: "Wrong id format"
+        });
+    }
+
+    //if there is no file on req
+    if (req.file == null) {
+        console.log("null file");
+        res.send({
+            success: false,
+            message: "No file!"
+        })
+    }
+    var originalname = req.file.originalname;
+    var extension = originalname.substring(originalname.lastIndexOf('.'));
+    //remove file if it exits
+    gfs.remove({
+        filename: "image-" + req.params.id + extension
+    }, function (err) {
+
+        var writestream = gfs.createWriteStream({
+            filename: "image-" + req.params.id + extension
+        });
+        fs.createReadStream(req.file.path).pipe(writestream);
+
+        writestream.on('close', function (file) {
+            Story.findById(new ObjectId(req.params.id), function (err, story) {
+                if (err) {
+                    console.log(err);
+                    return res.send({
+                        success: false,
+                        message: err.message
+                    });
+                } else {
+
+                    if (story == null) {
+                        console.log("Null story");
+                        return res.send({
+                            success: false,
+                            message: "Story not found"
+                        })
+                    } else {
+                        story.image = file._id;
+                        story.save(function (err1) {
+                            if (err1) {
+                                fs.unlink(req.file.path, function (err2) {
+                                    if (err2) {
+                                        console.log(err2);
+                                        return res.send({
+                                            success: false,
+                                            message: err2.message
+                                        });
+                                    } else {
+                                        console.log(err1);
+                                        return res.send({
+                                            success: false,
+                                            message: err1.message
+                                        });
+                                    }
+                                })
+                            } else {
+
+                                //delete temp file
+                                fs.unlink(req.file.path, function (err) {
+                                    if (err) {
+                                        console.log(err);
+                                        return res.send({
+                                            success: false,
+                                            message: err.message
+                                        });
+                                    } else {
+                                        return res.send({
+                                            success: true,
+                                            message: "Upload image successfully"
+                                        })
+                                    }
+                                })
+                            }
+                        })
+                    }
+                }
+            }
+            )
+        })
+    })
+})
 
 module.exports = router;

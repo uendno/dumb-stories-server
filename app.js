@@ -12,6 +12,8 @@ var routes = require('./routes/index');
 var stories = require('./routes/stories');
 var authenticate = require('./routes/authenticate');
 var register = require('./routes/register');
+var profile = require('./routes/profile');
+var image = require('./routes/image');
 
 var app = express();
 
@@ -27,11 +29,11 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-//routes don't need to be authenticated
+//routes don't need to be authorized
 app.use('/authenticate', authenticate);
 app.use('/register', register);
 
-//middleware for authentication
+//middleware for authorization
 app.use(function (req, res, next) {
 
     //get token from body or header
@@ -66,6 +68,8 @@ app.use(function (req, res, next) {
 //routes need to be authenticated
 app.use('/', routes);
 app.use('/stories', stories);
+app.use('/profile', profile);
+app.use('/image',image);
 
 
 // catch 404 and forward to error handler
