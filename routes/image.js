@@ -38,8 +38,9 @@ router.get("/:id", function (req, res) {
                     message: "File not found."
                 })
             } else {
-                console.log(file);
+           
                 var writestream = fs.createWriteStream('./temp/' + file.filename);
+                var filePath = path.dirname(module.parent.filename) + '/bin/temp/' + file.filename;
                 var readstream = gfs.createReadStream({
                     _id: new ObjectId(req.params.id)
                 });
@@ -47,6 +48,10 @@ router.get("/:id", function (req, res) {
                 writestream.on('close', function (err) {
                     if (err) {
                         console.log(err.message);
+
+                        //delete file
+                        deleteTemp(filePath);
+                        
                         return res.send({
                             success: false,
                             message: err.message
@@ -55,8 +60,11 @@ router.get("/:id", function (req, res) {
                         res.sendFile(path.dirname(module.parent.filename) + '/bin/temp/' + file.filename, function (err) {
                             if (err) {
                                 console.log(err);
+                                //delete file
+                                deleteTemp(filePath);
                             } else {
-                                fs.unlinkSync(path.dirname(module.parent.filename) + '/bin/temp/' + file.filename);
+                                //delete file
+                                deleteTemp(filePath);
                             }
                         });
 
@@ -66,9 +74,15 @@ router.get("/:id", function (req, res) {
 
         }
     })
-
-
-
 })
+
+var deleteTemp = function (path) {
+    //delete temp file
+    fs.unlink(path, function (err) {
+        if (err) {
+            console.log(err);
+        }
+    })
+}
 
 module.exports = router;

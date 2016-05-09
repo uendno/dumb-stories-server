@@ -33,12 +33,17 @@ router.get('/:id', function (req, res) {
                 message: err.message
             });
         } else {
+            var iamgeLink = "";
+            if (user.avatar != null) {
+                imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + user.avatar
+            }
+
             return res.send({
                 success: true,
                 data: {
                     _id: user._id,
                     user_name: user.user_name,
-                    avatar: "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + user.avatar,
+                    avatar: imageLink,
                     created_at: user.created_at,
                     updated_at: user.updated_at
                 }
@@ -71,6 +76,7 @@ router.post('/uploadavatar', upload.single('avatar'), function (req, res) {
         var writestream = gfs.createWriteStream({
             filename: "avatar-" + req.decoded._doc._id + extension
         });
+        
         fs.createReadStream(req.file.path).pipe(writestream);
 
         writestream.on('close', function (file) {
@@ -83,40 +89,25 @@ router.post('/uploadavatar', upload.single('avatar'), function (req, res) {
                         avatar: file._id
                     }
                 },
-                function (err1) {
-                    if (err1) {
+                function (err) {
+                    if (err) {
 
-                        //delete temp file
-                        fs.unlink(req.file.path, function (err2) {
-                            if (err2) {
-                                console.log(err2);
-                                return res.send({
-                                    success: false,
-                                    message: err2.message
-                                });
-                            } else {
-                                console.log(err1);
-                                return res.send({
-                                    success: false,
-                                    message: err1.message
-                                });
-                            }
-                        })
+                        //delete file
+                        deleteTemp(req.file.path);
+                        
+                        console.log(err);
+                        return res.send({
+                            success: false,
+                            message: err.message
+                        });
+                        
                     } else {
-                        //delete temp file
-                        fs.unlink(req.file.path, function (err) {
-                            if (err) {
-                                console.log(err);
-                                return res.send({
-                                    success: false,
-                                    message: err.message
-                                });
-                            } else {
-                                return res.send({
-                                    success: true,
-                                    message: "Upload avatar successfully"
-                                })
-                            }
+                        //delete file
+                        deleteTemp(req.file.path);
+
+                        return res.send({
+                            success: true,
+                            message: "Upload avatar successfully"
                         })
                     }
                 }
@@ -125,5 +116,14 @@ router.post('/uploadavatar', upload.single('avatar'), function (req, res) {
     })
 
 });
+
+var deleteTemp = function (path) {
+    //delete temp file
+    fs.unlink(path, function (err) {
+        if (err) {
+            console.log(err);
+        }
+    })
+}
 
 module.exports = router;

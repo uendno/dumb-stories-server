@@ -78,11 +78,16 @@ router.get('/', function (req, res) {
 
                                     }
 
+                                    var imageLink = "";
+                                    if (story.image != null) {
+                                        imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image
+                                    }
+
                                     //story for adding to the response data[]
                                     var resStory = {
                                         _id: story._id,
                                         title: story.title,
-                                        image: "http://" +config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image,
+                                        image: imageLink,
                                         creator: {
                                             _id: creator._id,
                                             name: creator.user_name
@@ -117,6 +122,7 @@ router.get('/:id', function (req, res) {
 
     //check id format
     if (!ObjectId.isValid(req.params.id)) {
+
         console.log("Invalid id");
         return res.send({
             success: false,
@@ -213,12 +219,17 @@ router.get('/:id', function (req, res) {
                                             //if this is the last part of result pieces
                                             if (resultPieces.length == story.pieces.length) {
 
+                                                var imageLink = "";
+                                                if (story.image != null) {
+                                                    imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image
+                                                }
+
                                                 return res.send({
                                                     success: true,
                                                     data: {
                                                         _id: story._id,
                                                         title: story.title,
-                                                        image: "http://" +config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image,
+                                                        image: imageLink,
                                                         creator: {
                                                             _id: storyCreator._id,
                                                             name: storyCreator.user_name
@@ -346,6 +357,10 @@ router.post('/:id/uploadimage', upload.single('image'), function (req, res) {
     var gfs = Grid(conn.db);
     //check id format
     if (!ObjectId.isValid(req.params.id)) {
+        
+        //delete file
+        deleteTemp(req.file.path);
+        
         console.log("Invalid id");
         return res.send({
             success: false,
@@ -384,55 +399,64 @@ router.post('/:id/uploadimage', upload.single('image'), function (req, res) {
                 } else {
 
                     if (story == null) {
+
                         console.log("Null story");
+                        //delete file
+                        deleteTemp(req.file.path);
+
                         return res.send({
                             success: false,
                             message: "Story not found"
                         })
                     } else {
-                        story.image = file._id;
-                        story.save(function (err1) {
-                            if (err1) {
-                                fs.unlink(req.file.path, function (err2) {
-                                    if (err2) {
-                                        console.log(err2);
-                                        return res.send({
-                                            success: false,
-                                            message: err2.message
-                                        });
-                                    } else {
-                                        console.log(err1);
-                                        return res.send({
-                                            success: false,
-                                            message: err1.message
-                                        });
-                                    }
-                                })
-                            } else {
 
-                                //delete temp file
-                                fs.unlink(req.file.path, function (err) {
-                                    if (err) {
-                                        console.log(err);
-                                        return res.send({
-                                            success: false,
-                                            message: err.message
-                                        });
-                                    } else {
-                                        return res.send({
-                                            success: true,
-                                            message: "Upload image successfully"
-                                        })
-                                    }
-                                })
-                            }
-                        })
+                        //check if user created this story or not
+                        if (story.creator_id != req.decoded._doc._id) {
+                            //delete file
+                            deleteTemp(req.file.path);
+
+                            return res.send({
+                                success: false,
+                                message: "You don't have permission to do this!"
+                            })
+                        } else {
+                            story.image = file._id;
+                            story.save(function (err) {
+                                if (err) {
+                                    //delete file
+                                    deleteTemp(req.file.path);
+
+                                    console.log(err);
+                                    return res.send({
+                                        success: false,
+                                        message: err.message
+                                    });
+                                } else {
+
+                                    //delete file
+                                    deleteTemp(req.file.path);
+
+                                    return res.send({
+                                        success: true,
+                                        message: "Upload image successfully"
+                                    })
+                                }
+                            })
+                        }
                     }
                 }
-            }
-            )
+            })
         })
     })
 })
+
+var deleteTemp = function (path) {
+    //delete temp file
+    fs.unlink(path, function (err) {
+        if (err) {
+            console.log(err);
+        }
+    })
+}
 
 module.exports = router;

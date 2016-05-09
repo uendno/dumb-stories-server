@@ -12,7 +12,7 @@ config.auth = {
 }
 
 config.server = {
-    IP_ADDRESS: "128.199.167.164",
+    IP_ADDRESS: "localhost",
     PORT: 3000
 }
 
