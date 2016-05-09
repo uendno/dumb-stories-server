@@ -38,7 +38,7 @@ router.get('/:id', function (req, res) {
                 data: {
                     _id: user._id,
                     user_name: user.user_name,
-                    avatar: config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + user.avatar,
+                    avatar: "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + user.avatar,
                     created_at: user.created_at,
                     updated_at: user.updated_at
                 }
@@ -85,7 +85,7 @@ router.post('/uploadavatar', upload.single('avatar'), function (req, res) {
                 },
                 function (err1) {
                     if (err1) {
-                       
+
                         //delete temp file
                         fs.unlink(req.file.path, function (err2) {
                             if (err2) {

@@ -82,7 +82,7 @@ router.get('/', function (req, res) {
                                     var resStory = {
                                         _id: story._id,
                                         title: story.title,
-                                        image: config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image,
+                                        image: "http://" +config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image,
                                         creator: {
                                             _id: creator._id,
                                             name: creator.user_name
@@ -218,7 +218,7 @@ router.get('/:id', function (req, res) {
                                                     data: {
                                                         _id: story._id,
                                                         title: story.title,
-                                                        image: config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image,
+                                                        image: "http://" +config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image,
                                                         creator: {
                                                             _id: storyCreator._id,
                                                             name: storyCreator.user_name
