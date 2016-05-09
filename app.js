@@ -32,6 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //routes don't need to be authorized
 app.use('/authenticate', authenticate);
 app.use('/register', register);
+app.use('/image',image);
 
 //middleware for authorization
 app.use(function (req, res, next) {
@@ -69,7 +70,7 @@ app.use(function (req, res, next) {
 app.use('/', routes);
 app.use('/stories', stories);
 app.use('/profile', profile);
-app.use('/image',image);
+
 
 
 // catch 404 and forward to error handler
