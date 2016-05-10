@@ -68,30 +68,69 @@ router.get('/', function (req, res) {
                             imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image
                         }
 
-                        //story for adding to the response data[]
-                        var resStory = {
-                            _id: story._id,
-                            title: story.title,
-                            image: imageLink,
-                            creator: {
-                                _id: story.creator_id._id,
-                                name: story.creator_id.user_name
-                            },
-                            preview: preview,
-                            created_at: story.created_at,
-                            updated_at: story.updated_at
-                        };
+                        //other writers
+                        var otherIds = [];
+                        for (var i = 0; i < story.pieces.length; i++) {
+                            var currentPiece = story.pieces[i];
+                            
+                          
+                            
+                            var isContained = false;
+                            if (currentPiece.creator_id.equals(story.creator_id._id)) {
+                                isContained = true;
+                            } else {
+                                for (var j = 0; j < otherIds.length; j++) {
+                                    if (otherIds[j] == currentPiece.creator_id) {
+                                        isContained = true;
+                                    }
+                                }
+                            }
 
-                        //push to data[]
-                        data.push(resStory);
-
-                        //check if this is the final part of data[]
-                        if (data.length == stories.length) {
-                            return res.send({
-                                success: true,
-                                data: data
-                            })
+                            if (!isContained) {
+                                otherIds.push(currentPiece.creator_id);
+                            }
                         }
+
+
+
+                        User.find({ _id: { $in: otherIds } }, '_id user_name', null, function (err, others) {
+                            if (err) {
+                                console.log(err);
+                                return res.send({
+                                    success: true,
+                                    message: err.message
+                                });
+                            } else {
+                                //story for adding to the response data[]
+                                var resStory = {
+                                    _id: story._id,
+                                    title: story.title,
+                                    image: imageLink,
+                                    creator: {
+                                        _id: story.creator_id._id,
+                                        name: story.creator_id.user_name
+                                    },
+                                    others: others,
+                                    preview: preview,
+                                    created_at: story.created_at,
+                                    updated_at: story.updated_at
+                                };
+
+                                //push to data[]
+                                data.push(resStory);
+
+                                //check if this is the final part of data[]
+                                if (data.length == stories.length) {
+                                    return res.send({
+                                        success: true,
+                                        data: data
+                                    })
+                                }
+                            }
+                        })
+
+
+
                     }
                 }
             }
@@ -219,7 +258,7 @@ router.get('/:id', function (req, res) {
 });
 
 //route for posting a story into data base
-router.post('/', function (req, res) {
+router.post('/newstory', function (req, res) {
 
     var creatorID = req.decoded._doc._id;
     var body = req.body;
