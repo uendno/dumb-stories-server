@@ -11,6 +11,7 @@ var ObjectId = mongoose.Types.ObjectId;
 
 Grid.mongo = mongoose.mongo;
 
+//route for get a image
 router.get("/:id", function (req, res) {
 
     //check id format

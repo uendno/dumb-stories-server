@@ -13,21 +13,24 @@ var ObjectIdSchema = Schema.ObjectId;
 
 var pieceSchema = new Schema({
     _id: ObjectIdSchema,
-    creator_id: ObjectIdSchema,
+    creator_id: { type: Schema.Types.ObjectId, ref: 'User' },
     content: String,
     next_start: String,
     created_at: Date,
     updated_at: Date
 });
 
+
 var storySchema = new Schema({
     title: String,
-    creator_id: ObjectIdSchema,
+    creator_id:  { type: Schema.Types.ObjectId, ref: 'User' },
     image: ObjectIdSchema,
     pieces: [pieceSchema],
     created_at: Date,
     updated_at: Date
 });
+
+storySchema.index({creator_id: 1});
 
 storySchema.pre('save', function (next) {
     //get current date

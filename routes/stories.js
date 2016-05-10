@@ -21,100 +21,81 @@ Grid.mongo = mongoose.mongo;
 //route for getting all the stories
 router.get('/', function (req, res) {
 
-    Story.find({}, function (err, stories) {
-        if (err) {
-            console.log(err);
-            return res.send({
-                success: false,
-                message: err.message
-            });
-        } else {
-
-            //if result is null
-            if (stories == null || stories.length == 0) {
-                console.log("null stories");
-
+    Story.find({}, null,
+        {
+            sort: {
+                updated_at: -1
+            }
+        })
+        .populate('creator_id')
+        .exec(function (err, stories) {
+            if (err) {
+                console.log(err);
                 return res.send({
                     success: false,
-                    message: "No stories"
+                    message: err.message
                 });
             } else {
-                var data = [];
-                for (var position = 0; position < stories.length; position++) {
 
-                    var story = stories[position];
+                //if result is null
+                if (stories == null || stories.length == 0) {
+                    console.log("null stories");
 
-                    //find the creator
-                    //We prevent the story variable from the side effect of asynchronous loop
-                    // by passing it in to this immediately invoked function expression
-                    (function (story) {
-                        User.findById(stories[position].creator_id, function (err, creator) {
+                    return res.send({
+                        success: false,
+                        message: "No stories"
+                    });
+                } else {
+                    var data = [];
+                    for (var position = 0; position < stories.length; position++) {
 
-                            if (err) {
-                                console.log(err);
-                                return res.send({
-                                    success: false,
-                                    message: err.message
-                                });
-                            } else {
-                                if (creator == null) {
-                                    console.log("null story creator");
+                        var story = stories[position];
 
-                                    return res.send({
-                                        success: false,
-                                        message: "Can't find the creator of the story"
-                                    })
-                                } else {
-
-                                    //get a review for this story
-                                    var preview = story.pieces[0].content;
-                                    var reviewLength = config.text.REVIEW_LENGTH;
-                                    if (reviewLength < preview.length) {
-                                        while (reviewLength >= 0 && preview.charAt(reviewLength) != ' ') {
-                                            reviewLength--;
-                                        }
-
-                                        preview = preview.substr(0, reviewLength) + "..."
-
-                                    }
-
-                                    var imageLink = "";
-                                    if (story.image != null) {
-                                        imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image
-                                    }
-
-                                    //story for adding to the response data[]
-                                    var resStory = {
-                                        _id: story._id,
-                                        title: story.title,
-                                        image: imageLink,
-                                        creator: {
-                                            _id: creator._id,
-                                            name: creator.user_name
-                                        },
-                                        preview: preview,
-                                        created_at: story.created_at,
-                                        updated_at: story.updated_at
-                                    };
-
-                                    //push to data[]
-                                    data.push(resStory);
-
-                                    //check if this is the final part of data[]
-                                    if (data.length == stories.length) {
-                                        return res.send({
-                                            success: true,
-                                            data: data
-                                        })
-                                    }
-                                }
+                        //get a review for this story
+                        var preview = story.pieces[0].content;
+                        var reviewLength = config.text.REVIEW_LENGTH;
+                        if (reviewLength < preview.length) {
+                            while (reviewLength >= 0 && preview.charAt(reviewLength) != ' ') {
+                                reviewLength--;
                             }
-                        });
-                    })(story);
+
+                            preview = preview.substr(0, reviewLength) + "..."
+
+                        }
+
+                        var imageLink = "";
+                        if (story.image != null) {
+                            imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image
+                        }
+
+                        //story for adding to the response data[]
+                        var resStory = {
+                            _id: story._id,
+                            title: story.title,
+                            image: imageLink,
+                            creator: {
+                                _id: story.creator_id._id,
+                                name: story.creator_id.user_name
+                            },
+                            preview: preview,
+                            created_at: story.created_at,
+                            updated_at: story.updated_at
+                        };
+
+                        //push to data[]
+                        data.push(resStory);
+
+                        //check if this is the final part of data[]
+                        if (data.length == stories.length) {
+                            return res.send({
+                                success: true,
+                                data: data
+                            })
+                        }
+                    }
                 }
             }
-        }
-    })
+        })
 });
 
 //route for getting a particular stories by it's id
@@ -130,126 +111,111 @@ router.get('/:id', function (req, res) {
         });
     }
 
-    Story.findById(new ObjectId(req.params.id), function (err, story) {
-        console.log(new ObjectId(req.params.id));
-        if (err) {
-            console.log(err);
-            return res.send({
-                success: false,
-                message: err.message
-            });
-        } else {
-            //if result is null
-            if (story == null) {
-                console.log("null result");
+    Story.findById(new ObjectId(req.params.id))
+        .populate('creator_id')
+        .exec(function (err, story) {
 
+            if (err) {
+                console.log(err);
                 return res.send({
                     success: false,
-                    message: "Can't find the story"
-                })
-            } else {
-                //find creator of the story
-                User.findById(story.creator_id, function (err, storyCreator) {
-                    if (err) {
-                        console.log(err);
-                        return res.send({
-                            success: false,
-                            message: err.message
-                        });
-                    } else {
-                        if (storyCreator == null) {
-                            console.log("null story creator");
-
-                            return res.send({
-                                success: false,
-                                message: "Can't find the creator of the story"
-                            })
-                        } else {
-                            //result pieces to be sent
-                            var resultPieces = [];
-
-                            for (var position = 0; position < story.pieces.length; position++) {
-
-                                var piece = story.pieces[position];
-                                var start = "";
-                                if (position > 0) {
-                                    start = story.pieces[position - 1].next_start;
-                                }
-
-                                //Find the creator of the piece
-                                //We prevent the story variable from the side effect of asynchronous loop
-                                // by passing it in to this immediately invoked function expression
-                                (function (piece, start) {
-                                    User.findById(piece.creator_id, function (err, pieceCreator) {
-                                        if (err) {
-                                            console.log(err);
-                                            return res.send({
-                                                success: false,
-                                                message: erer.message
-                                            });
-                                        } else {
-                                            if (pieceCreator == null) {
-                                                console.log("null piece creator");
-                                                return res.send({
-                                                    success: false,
-                                                    message: "Can't find the creator of the piece"
-                                                })
-                                            } else {
-
-                                                //data for adding to the resultPiece
-                                                var content = piece.content;
-
-                                                //check if it's a 1st piece or not, if not, it's send back the content containing the it's start defined by the previous piece
-                                                var resultPiece = {
-                                                    _id: piece._id,
-                                                    creator: {
-                                                        _id: pieceCreator._id,
-                                                        name: pieceCreator.user_name
-                                                    },
-                                                    start: start,
-                                                    content: content,
-                                                    next_start: piece.next_start,
-                                                    created_at: piece.created_at,
-                                                    updated_at: piece.updated_at
-                                                };
-
-                                                resultPieces.push(resultPiece);
-                                            }
-
-                                            //if this is the last part of result pieces
-                                            if (resultPieces.length == story.pieces.length) {
-
-                                                var imageLink = "";
-                                                if (story.image != null) {
-                                                    imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image
-                                                }
-
-                                                return res.send({
-                                                    success: true,
-                                                    data: {
-                                                        _id: story._id,
-                                                        title: story.title,
-                                                        image: imageLink,
-                                                        creator: {
-                                                            _id: storyCreator._id,
-                                                            name: storyCreator.user_name
-                                                        },
-                                                        pieces: resultPieces,
-                                                        created_at: story.created_at,
-                                                        updated_at: story.updated_at
-                                                    }
-                                                })
-                                            }
-                                        }
-                                    });
-                                })(piece, start);
-                            }
-                        }
-                    }
+                    message: err.message
                 });
+            } else {
+                //if result is null
+                if (story == null) {
+                    console.log("null result");
+
+                    return res.send({
+                        success: false,
+                        message: "Can't find the story"
+                    })
+                } else {
+
+                    //result pieces to be sent
+                    var resultPieces = [];
+
+                    for (var position = 0; position < story.pieces.length; position++) {
+
+                        var piece = story.pieces[position];
+                        var start = "";
+                        if (position > 0) {
+                            start = story.pieces[position - 1].next_start;
+                        }
+
+                        //Find the creator of the piece
+                        //We prevent the story variable from the side effect of asynchronous loop
+                        // by passing it in to this immediately invoked function expression
+                        (function (piece, start) {
+
+                            //find piece creator
+                            User.findById(piece.creator_id, function (err, pieceCreator) {
+                                if (err) {
+                                    console.log(err);
+                                    return res.send({
+                                        success: false,
+                                        message: erer.message
+                                    });
+                                } else {
+                                    if (pieceCreator == null) {
+                                        console.log("null piece creator");
+                                        return res.send({
+                                            success: false,
+                                            message: "Can't find the creator of the piece"
+                                        })
+                                    } else {
+
+                                        //data for adding to the resultPiece
+                                        var content = piece.content;
+
+                                        //check if it's a 1st piece or not, if not, it's send back the content containing the it's start defined by the previous piece
+                                        var resultPiece = {
+                                            _id: piece._id,
+                                            creator: {
+                                                _id: pieceCreator._id,
+                                                name: pieceCreator.user_name
+                                            },
+                                            start: start,
+                                            content: content,
+                                            next_start: piece.next_start,
+                                            created_at: piece.created_at,
+                                            updated_at: piece.updated_at
+                                        };
+
+                                        resultPieces.push(resultPiece);
+                                    }
+
+                                    //if this is the last part of result pieces
+                                    if (resultPieces.length == story.pieces.length) {
+
+                                        var imageLink = "";
+                                        if (story.image != null) {
+                                            imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image
+                                        }
+
+                                        return res.send({
+                                            success: true,
+                                            data: {
+                                                _id: story._id,
+                                                title: story.title,
+                                                image: imageLink,
+                                                creator: {
+                                                    _id: story.creator_id._id,
+                                                    name: story.creator_id.user_name
+                                                },
+                                                pieces: resultPieces,
+                                                created_at: story.created_at,
+                                                updated_at: story.updated_at
+                                            }
+                                        })
+                                    }
+                                }
+                            });
+                        })(piece, start);
+                    }
+                }
             }
-        }
-    })
+        })
 });
 
 //route for posting a story into data base
@@ -281,6 +247,8 @@ router.post('/', function (req, res) {
         ]
     });
 
+
+
     story.save(function (err, story) {
 
         if (err) {
@@ -290,19 +258,33 @@ router.post('/', function (req, res) {
                 message: err.message
             });
         } else {
-            console.log("created story successfully");
-            return res.send({
-                success: true,
-                message: "Create story successfully",
-                story: story
-            });
 
+            User.findOneAndUpdate({ _id: story.creator_id }, {
+                $push: {
+                    stories: story.id
+                }
+            }, function (err) {
+                if (err) {
+                    console.log(err);
+                    return res.send({
+                        success: false,
+                        message: err.message
+                    });
+                } else {
+                    console.log("created story successfully");
+                    return res.send({
+                        success: true,
+                        message: "Create story successfully",
+                        story: story
+                    });
+                }
+            })
         }
     })
 });
 
 //route for posting a piece into a particular story specified by it's id
-router.post('/:id', function (req, res) {
+router.post('/:id/newpiece', function (req, res) {
 
     //check id format
     if (!ObjectId.isValid(req.params.id)) {
@@ -353,14 +335,15 @@ router.post('/:id', function (req, res) {
         })
 });
 
-router.post('/:id/uploadimage', upload.single('image'), function (req, res) {
+//route for upload image to a story
+router.put('/:id/uploadimage', upload.single('image'), function (req, res) {
     var gfs = Grid(conn.db);
     //check id format
     if (!ObjectId.isValid(req.params.id)) {
-        
+
         //delete file
         deleteTemp(req.file.path);
-        
+
         console.log("Invalid id");
         return res.send({
             success: false,
@@ -447,6 +430,93 @@ router.post('/:id/uploadimage', upload.single('image'), function (req, res) {
                 }
             })
         })
+    })
+})
+
+//route for update story information
+router.put('/:id', function (req, res) {
+    //check id format
+    if (!ObjectId.isValid(req.params.id)) {
+        console.log("Invalid id");
+        return res.send({
+            success: false,
+            message: "Wrong id format"
+        });
+    }
+
+    //Check null data
+    if (req.body.story == null) {
+        console.log("Null data");
+        return res.send({
+            success: false,
+            message: "Null data"
+        });
+    }
+
+    console.log(req.body.story);
+
+    Story.findOneAndUpdate(
+        {
+            _id: req.params.id
+        },
+        req.body.story,
+        function (err) {
+            if (err) {
+                console.log(err);
+                return res.send({
+                    success: false,
+                    message: err.message
+                });
+            } else {
+                return res.send({
+                    success: true,
+                    message: "Update successfully"
+                })
+            }
+        })
+})
+
+//route for delete a story
+router.delete("/:id", function (req, res) {
+    //check id format
+    if (!ObjectId.isValid(req.params.id)) {
+        console.log("Invalid id");
+        return res.send({
+            success: false,
+            message: "Wrong id format"
+        });
+    }
+
+    Story.findById(new ObjectId(req.params.id), function (err, story) {
+        if (err) {
+            console.log(err);
+            return res.send({
+                success: false,
+                message: err.message
+            });
+        } else {
+            if (req.decoded._doc._id != story.creator_id) {
+                return res.send({
+                    success: false,
+                    message: "You don't have permission to do this!"
+                })
+            } else {
+                Story.remove({ _id: req.params.id }, function (err) {
+                    if (err) {
+                        console.log(err);
+                        return res.send({
+                            success: false,
+                            message: err.message
+                        });
+                    } else {
+                        return res.send({
+                            success: true,
+                            message: "Delete story successfully"
+                        })
+                    }
+                })
+            }
+        }
     })
 })
 

@@ -11,6 +11,7 @@ var userSchema = new Schema({
     user_name: {type: String, index: true},
     password: String,
     avatar: ObjectIdSchema,
+    stories:  [{ type: Schema.Types.ObjectId, ref: 'Story' }],
     created_at: Date,
     updated_at: Date
 });

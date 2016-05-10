@@ -7,6 +7,7 @@ var fs = require("fs");
 var config = require("../config");
 
 var User = require("../models/User");
+var Story = require("../models/Story");
 
 var router = express.Router();
 var upload = multer({ dest: 'temp/' });
@@ -14,6 +15,7 @@ var ObjectId = mongoose.Types.ObjectId;
 var conn = mongoose.connection;
 Grid.mongo = mongoose.mongo;
 
+//route for getting a profile
 router.get('/:id', function (req, res) {
     //check id format
     if (!ObjectId.isValid(req.params.id)) {
@@ -25,36 +27,113 @@ router.get('/:id', function (req, res) {
     }
 
 
-    User.findById(new ObjectId(req.params.id), function (err, user) {
+    User.findById(new ObjectId(req.params.id)).populate({ path: 'stories', options: { sort: { 'created_at': -1 } } })
+        .exec(function (err, user) {
+            if (err) {
+                console.log(err);
+                return res.send({
+                    success: false,
+                    message: err.message
+                });
+            } else {
+                if (user == null) {
+                    console.log("null user");
+                    return res.send({
+                        success: false,
+                        message: "User not found"
+                    })
+                } else {
+
+                    var resultStories = [];
+                    for (var position = 0; position < user.stories.length; position++) {
+
+                        var story = user.stories[position];
+
+                        //get a review for this story
+                        var preview = story.pieces[0].content;
+                        var reviewLength = config.text.REVIEW_LENGTH;
+                        if (reviewLength < preview.length) {
+                            while (reviewLength >= 0 && preview.charAt(reviewLength) != ' ') {
+                                reviewLength--;
+                            }
+
+                            preview = preview.substr(0, reviewLength) + "..."
+
+                        }
+
+                        var imageLink = "";
+                        if (story.image != null) {
+                            imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + story.image
+                        }
+
+                        //story for adding to the response resultStories[]
+                        var resStory = {
+                            _id: story._id,
+                            title: story.title,
+                            image: imageLink,
+                            creator: {
+                                _id: user._id,
+                                name: user.user_name
+                            },
+                            preview: preview,
+                            created_at: story.created_at,
+                            updated_at: story.updated_at
+                        };
+
+                        //push to resultStories[]
+                        resultStories.push(resStory);
+                    }
+
+
+                    var iamgeLink = "";
+                    if (user.avatar != null) {
+                        imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + user.avatar
+                    }
+
+                    return res.send({
+                        success: true,
+                        data: {
+                            _id: user._id,
+                            user_name: user.user_name,
+                            avatar: imageLink,
+                            stories: resultStories,
+                            created_at: user.created_at,
+                            updated_at: user.updated_at
+                        }
+                    })
+                }
+            }
+        });
+});
+
+//route for getting all pieces wirten by user
+router.get("/:id/allpieces", function (req, res) {
+    //check id format
+    if (!ObjectId.isValid(req.params.id)) {
+        console.log("Invalid id");
+        return res.send({
+            success: false,
+            message: "Wrong id format"
+        });
+    }
+
+    Story.find({ 'pieces.creator_id': req.params.id }, null, { sort: { 'created_at': -1 } }, function (err, pieces) {
         if (err) {
             console.log(err);
             return res.send({
                 success: false,
-                message: err.message
-            });
+                pieces: errr.message
+            })
         } else {
-            var iamgeLink = "";
-            if (user.avatar != null) {
-                imageLink = "http://" + config.server.IP_ADDRESS + ":" + config.server.PORT + "/image/" + user.avatar
-            }
-
             return res.send({
                 success: true,
-                data: {
-                    _id: user._id,
-                    user_name: user.user_name,
-                    avatar: imageLink,
-                    created_at: user.created_at,
-                    updated_at: user.updated_at
-                }
+                pieces: pieces
             })
         }
-    }
-    )
+    })
+})
 
-
-});
-
+//route for upload avatar
 router.post('/uploadavatar', upload.single('avatar'), function (req, res) {
     var gfs = Grid(conn.db);
 
@@ -76,7 +155,7 @@ router.post('/uploadavatar', upload.single('avatar'), function (req, res) {
         var writestream = gfs.createWriteStream({
             filename: "avatar-" + req.decoded._doc._id + extension
         });
-        
+
         fs.createReadStream(req.file.path).pipe(writestream);
 
         writestream.on('close', function (file) {
@@ -94,13 +173,13 @@ router.post('/uploadavatar', upload.single('avatar'), function (req, res) {
 
                         //delete file
                         deleteTemp(req.file.path);
-                        
+
                         console.log(err);
                         return res.send({
                             success: false,
                             message: err.message
                         });
-                        
+
                     } else {
                         //delete file
                         deleteTemp(req.file.path);
